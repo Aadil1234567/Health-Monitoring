@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Running Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Running Tracker</h1>
+    </header>
+    <div class="container">
+        <form method="POST">
+            <label for="distance">Distance (km):</label>
+            <input type="number" id="distance" name="distance" step="0.01" required>
+            <br>
+            <label for="duration">Duration (HH:MM:SS):</label>
+            <input type="text" id="duration" name="duration" pattern="\d{2}:\d{2}:\d{2}" required>
+
+            <br>
+            <button type="submit">Log Run</button>
+        </form>
+        <h3>Previous Runs:</h3>
+        <ul>
+            {% for data in previous_data %}
+                <li>{{ data }}</li>
+            {% endfor %}
+        </ul>
+        <a href="{{ url_for('index') }}">Back to Home</a>
+    </div>
+</body>
+    <footer>
+        <h2>For emergency services, contact government hospitals: </h2>
+        <p>
+        Alexandra Hospital:	6379 3162 (A&E)
+        6379 3840 (admission enquiries)</p>
+        <p>Changi General Hospital:	6788 8833 (general enquiries 24hrs)</p>
+        <p>KK Women's And Children's Hospital:
+        6293 4044 (24hour general line)
+        6394 1199 (women's 24 hr clinic)
+        6394 1177 (Children's A&E)</p>
+        <p>National University: Hospital	6779 5555 (24-hours general line)</p>
+        <p>Singapore General Hospital:	6321 4103 /
+        6321 4311 (A&E)</p>
+        Tan Tock Seng Hospital:	6256 6011 (24hrs general)
+        6357 8866
+    </p>
+    </footer>
+</html>

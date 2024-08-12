@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Monitoring</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <header>
+        <h1>WELLNEST</h1>
+        <h2><form action="{{ url_for('logout') }}" method="post">
+            <button type="submit">Logout</button>
+        </form>
+</h2>
+    </header>
+    <div class="container">
+        <a href="{{ url_for('monitor') }}">Monitor Health</a>
+        <a href="{{ url_for('bmi') }}">Calculate BMI</a>
+        <a href="{{ url_for('run') }}">Running Tracker</a>
+
+
+        <h2>Appointments/Reminders</h2>
+        <form method="POST">
+            <input type="text" name="note" placeholder="Enter a note">
+            <button type="submit">Add Appointments/Reminders</button>
+        </form>
+        <ul>
+            {% for note in notes %}
+                <li>{{ note }}</li>
+            {% endfor %}
+        </ul>
+        <form action="{{ url_for('clear_notes') }}" method="POST">
+            <button type="submit">Clear All Notes</button>
+        </form>
+        <form action="{{ url_for('delete_note') }}" method="POST">
+            <button type="submit">Delete Last Note</button>
+        </form>
+    </div>
+    <footer>
+        <h2>For emergency services, contact government hospitals: </h2>
+        <p>
+        Alexandra Hospital:	6379 3162 (A&E)
+        6379 3840 (admission enquiries)</p>
+        <p>Changi General Hospital:	6788 8833 (general enquiries 24hrs)</p>
+        <p>KK Women's And Children's Hospital:
+        6293 4044 (24hour general line)
+        6394 1199 (women's 24 hr clinic)
+        6394 1177 (Children's A&E)</p>
+        <p>National University: Hospital	6779 5555 (24-hours general line)</p>
+        <p>Singapore General Hospital:	6321 4103 /
+        6321 4311 (A&E)</p>
+        Tan Tock Seng Hospital:	6256 6011 (24hrs general)
+        6357 8866
+    </footer>
+</body>
+</html>
