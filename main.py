@@ -2,11 +2,13 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from datetime import datetime
 import pytz
 import hashlib
+import os
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'  # Needed for session management
 
 USER_FILE = 'users.txt'
+USER_DATA_DIR = 'user_data'  # Directory to store user-specific data
 
 # Function to read user data from file
 def read_users():
@@ -26,9 +28,32 @@ def write_user(username, password):
     with open(USER_FILE, 'a') as file:
         file.write(f'{username},{password}\n')
 
+    # Create a directory for storing user's personal data
+    user_data_dir = os.path.join(USER_DATA_DIR, username)
+    if not os.path.exists(user_data_dir):
+        os.makedirs(user_data_dir)
+
 # Function to hash passwords
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
+
+# Function to read data from a user's file
+def read_user_data(username, filename):
+    user_data_dir = os.path.join(USER_DATA_DIR, username)
+    file_path = os.path.join(user_data_dir, filename)
+    return read_data(file_path)
+
+# Function to write data to a user's file
+def write_user_data(username, filename, data):
+    user_data_dir = os.path.join(USER_DATA_DIR, username)
+    file_path = os.path.join(user_data_dir, filename)
+    write_data(file_path, data)
+
+# Function to clear data from a user's file
+def clear_user_data(username, filename):
+    user_data_dir = os.path.join(USER_DATA_DIR, username)
+    file_path = os.path.join(user_data_dir, filename)
+    clear_data(file_path)
 
 # Function to read data from a file
 def read_data(filename):
@@ -80,6 +105,7 @@ def login():
 
         if username in users and users[username] == hashed_password:
             session['logged_in'] = True
+            session['username'] = username  # Store the username in session
             flash('You have successfully logged in!', 'success')
             return redirect(url_for('index'))
         else:
@@ -89,22 +115,23 @@ def login():
 
 @app.route('/logout', methods=["POST"])
 def logout():
-    session.pop('logged_in', None)  # Remove the 'logged_in' key from the session
-    flash('You have been logged out.', 'info')  # Optionally, flash a message to inform the user
-    return redirect(url_for('login'))  # Redirect to the login page
-
+    session.pop('logged_in', None)
+    session.pop('username', None)  # Clear the username from the session
+    flash('You have been logged out.', 'info')
+    return redirect(url_for('login'))
 
 @app.route('/', methods=["GET", "POST"])
 def index():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
 
-    notes = read_data("notes.txt")
+    username = session['username']
+    notes = read_user_data(username, "notes.txt")
     if request.method == "POST":
         note = request.form.get("note")
         if note:
             timestamp = get_sg_time()
-            write_data("notes.txt", f"{note} (added on {timestamp})")
+            write_user_data(username, "notes.txt", f"{note} (added on {timestamp})")
         return redirect(url_for('index'))
     return render_template("index.html", notes=notes)
 
@@ -113,7 +140,8 @@ def clear_notes():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
 
-    clear_data("notes.txt")
+    username = session['username']
+    clear_user_data(username, "notes.txt")
     return redirect(url_for('index'))
 
 @app.route('/delete', methods=["POST"])
@@ -121,12 +149,15 @@ def delete_note():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
 
-    notes = read_data("notes.txt")
+    username = session['username']
+    notes = read_user_data(username, "notes.txt")
     if notes:
         notes.pop() # Remove the last note
-        with open("notes.txt", "w") as file:
+        user_data_dir = os.path.join(USER_DATA_DIR, username)
+        file_path = os.path.join(user_data_dir, "notes.txt")
+        with open(file_path, "w") as file:
             for note in notes:
-                file.write(note + "\n")
+                file.write(note)
     return redirect(url_for('index'))
 
 @app.route('/monitor', methods=["GET", "POST"])
@@ -134,10 +165,11 @@ def monitor():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
 
+    username = session['username']
     advice = ""
     heart_rate = None
     blood_pressure = None
-    previous_data = read_data("monitor_data.txt")
+    previous_data = read_user_data(username, "monitor_data.txt")
 
     if request.method == "POST":
         heart_rate = request.form.get("heart_rate")
@@ -148,7 +180,7 @@ def monitor():
             blood_pressure = int(blood_pressure)
             timestamp = get_sg_time()
             data = f"Heart Rate: {heart_rate}, Blood Pressure: {blood_pressure} (added on {timestamp})"
-            write_data("monitor_data.txt", data)
+            write_user_data(username, "monitor_data.txt", data)
 
             if heart_rate < 60 or heart_rate > 100:
                 advice += "Your heart rate is abnormal. Please see a doctor. "
@@ -164,10 +196,11 @@ def bmi():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
 
+    username = session['username']
     bmi = None
     advice = ""
     details = ""
-    previous_data = read_data("bmi_data.txt")
+    previous_data = read_user_data(username, "bmi_data.txt")
 
     if request.method == "POST":
         weight = float(request.form.get("weight"))
@@ -175,7 +208,7 @@ def bmi():
         bmi = weight / (height ** 2)
         timestamp = get_sg_time()
         data = f"Weight: {weight}, Height: {height}, BMI: {bmi:.2f} (added on {timestamp})"
-        write_data("bmi_data.txt", data)
+        write_user_data(username, "bmi_data.txt", data)
 
         if bmi < 18.5:
             advice = "You are underweight."
@@ -197,7 +230,7 @@ def bmi():
         elif 25 <= bmi < 29.9:
             advice = "You are overweight."
             details = """
-                <h3>Exercise Routine:</h3>
+                <h3>Exercise Routine:</h>
                 <ul>
                     <li>30 minutes of moderate-intensity aerobic activity 5 days a week.</li>
                     <li>Strength training exercises at least 2 days a week.</li>
@@ -205,21 +238,17 @@ def bmi():
                 </ul>
             """
         else:
-            advice = "You are obese. Please see a doctor."
+            advice = "You are obese."
             details = """
-                <h3>Exercise and Diet Tips for Weight Loss:</h3>
+                <h3>Diet and Exercise Tips:</h>
                 <ul>
-                    <li>Eat a moderate amount, stop when you feel full and avoid snacking so that you do not consume excess calories per day. Avoid crash diets or fad diets as they are dangerous to your health and unsustainable in the long run.</li>
-                    <li>Diets that boast to be low-fat or low-carb may reduce weight, but their long-term effects are not known. A qualified dietician can help you plan a balanced diet with fewer calories to achieve weight loss and maintenance.</li>
-                    <li>Add more physical activity into your daily routine, such as climbing the stairs instead of taking the lift. Do moderate-intensity exercise five times a week, up to a maximum of 30 minutes each session. This can include brisk walking, light cycling or sports such as badminton. As your fitness levels improve, gradually incorporate more intense workouts like jogging or swimming. By this point, you can cut back on duration and frequency as these activities require more of you. Try exercising for at least 20 minutes three days a week.</li>
-                    <li>Some individuals may need extra help from medications to control weight. These medications may be used for a short period (six to 12 months) or in the long term (up to three years) in combination with diet modification and exercise.</li>
-                    <li>Set realistic goals, for example, target a loss of 1kg a week.</li>
-                    <li>Reward yourself when you reach a weight goal with activities like an outing or a good meal (remember, moderation is key).</li>
-                    <li>Make healthy eating and exercise part of your lifestyle, and involve your family or friends to increase accountability.</li>
-                    <li>Visualise a slimmer and healthier you, and tell yourself you can do it.</li>
-                    <li>Even if you miss exercise sessions or cannot keep to your diet for some time, it is important to think positively and resume your plans as soon as you can!</li>
+                    <li>Consult a healthcare provider for a personalized plan.</li>
+                    <li>Incorporate more fruits, vegetables, and whole grains into your diet.</li>
+                    <li>Aim for 150 to 300 minutes of moderate-intensity activity per week.</li>
+                    <li>Consider joining a support group or working with a dietitian.</li>
                 </ul>
             """
+
     return render_template("bmi.html", bmi=bmi, advice=advice, details=details, previous_data=previous_data)
 
 @app.route('/run', methods=["GET", "POST"])
@@ -227,16 +256,28 @@ def run():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
 
-    previous_data = read_data("run_data.txt")
+    username = session['username']
+    feedback = ""
+    previous_data = read_user_data(username, "run_data.txt")
+
     if request.method == "POST":
-        distance = request.form.get("distance")
-        duration = request.form.get("duration")
+        distance = float(request.form.get("distance"))
+        duration = float(request.form.get("duration"))
+
         if distance and duration:
+            speed = distance / duration
             timestamp = get_sg_time()
-            data = f"Distance: {distance} km, Duration: {duration} minutes (added on {timestamp})"
-            write_data("run_data.txt", data)
-        return redirect(url_for('run'))
-    return render_template("run.html", previous_data=previous_data)
+            data = f"Distance: {distance}km, Duration: {duration}h, Speed: {speed:.2f}km/h (added on {timestamp})"
+            write_user_data(username, "run_data.txt", data)
+
+            if speed < 8:
+                feedback = "Try to run faster next time!"
+            elif speed > 12:
+                feedback = "Great job! Keep up the pace!"
+            else:
+                feedback = "You're doing well. Keep maintaining your speed!"
+
+    return render_template("run.html", feedback=feedback, previous_data=previous_data)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=12345)
