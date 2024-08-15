@@ -262,12 +262,16 @@ def run():
 
     if request.method == "POST":
         distance = float(request.form.get("distance"))
-        duration = float(request.form.get("duration"))
+        duration_str = request.form.get("duration")
+
+        # Split the duration into hours, minutes, and seconds
+        h, m, s = map(int, duration_str.split(':'))
+        duration = h + m / 60 + s / 3600  # Convert the duration to hours
 
         if distance and duration:
             speed = distance / duration
             timestamp = get_sg_time()
-            data = f"Distance: {distance}km, Duration: {duration}h, Speed: {speed:.2f}km/h (added on {timestamp})"
+            data = f"Distance: {distance}km, Duration: {duration_str} ({duration:.2f}h), Speed: {speed:.2f}km/h (added on {timestamp})"
             write_user_data(username, "run_data.txt", data)
 
             if speed < 8:

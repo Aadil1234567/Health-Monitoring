@@ -13,7 +13,8 @@ header {
 }
 
 .container {
-  width: 50%;
+  width: 90%;
+  max-width: 600px; /* Ensure it doesn't get too wide on larger screens */
   margin: auto;
   background-color: white;
   padding: 20px;
@@ -28,12 +29,13 @@ label {
 }
 
 input[type="number"], input[type="text"] {
-  width: calc(100% - 22px);
+  width: 100%;
   padding: 10px;
   margin-top: 5px;
   margin-bottom: 10px;
   border: 1px solid #ccc;
   border-radius: 5px;
+  box-sizing: border-box; /* Ensure padding and border are included in width */
 }
 
 button {
@@ -44,6 +46,8 @@ button {
   border-radius: 5px;
   cursor: pointer;
   margin-top: 10px;
+  width: 100%; /* Make buttons full-width on smaller screens */
+  box-sizing: border-box;
 }
 
 button:hover {
@@ -61,6 +65,7 @@ li {
   padding: 10px;
   border: 1px solid #ddd;
   border-radius: 5px;
+  word-wrap: break-word; /* Break long words to prevent overflow */
 }
 
 a {
@@ -78,4 +83,17 @@ a:hover {
 footer {
   text-align: center;
   background-color: #008cba;
+  color: white;
+  padding: 10px;
+  margin-top: 20px;
+}
+
+@media (min-width: 768px) {
+  .container {
+    width: 70%; /* Slightly wider on larger screens */
+  }
+
+  button {
+    width: auto; /* Return to auto width on larger screens */
+  }
 }
