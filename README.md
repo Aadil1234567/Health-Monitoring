@@ -21,9 +21,9 @@ Heart-rate and Blood-ppressure Monitor: Users can log their heart rate and blood
 BMI Calculator: A tool to calculate Body Mass Index (BMI) and provide tailored health advice based on the results.
 Running Tracker: A feature that allows users to log their running distance, duration, and speed, with motivational feedback provided based on their performance.
 
-## How we built it
+## How I built it
 
-WELLNEST was built using Flask, a lightweight web framework in Python, allowing us to create a backend for user management, data storage, and real-time processing. For data persistence, user information and health metrics are stored in text files, ensuring simplicity and ease of use. We implemented secure password management with SHA-256 hashing to protect user credentials. The platform's front-end was crafted with HTML, CSS, and Bootstrap to create an intuitive and responsive user interface.
+WELLNEST was built using Flask, a lightweight web framework in Python, allowing me to create a backend for user management, data storage, and real-time processing. For data persistence, user information and health metrics are stored in text files, ensuring simplicity and ease of use. I implemented secure password management with SHA-256 hashing to protect user credentials. The platform's front-end was crafted with HTML, CSS, and Bootstrap to create an intuitive and responsive user interface.
 
 ## Challenges I ran into
 
